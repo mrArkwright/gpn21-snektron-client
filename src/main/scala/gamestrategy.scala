@@ -13,7 +13,12 @@ def computeNextDirection(runningGameState: GameState.Running): Direction = {
     .filter { case (_, position) => positionsAdjacentToOtherPlayers.contains(position) }
     .map { case (direction, _) => direction }
 
-  val choicesLevel3 = freeDirections
+  val directionsToDeadEnds = adjacentPositions
+    .filter { case (_, position) => isDeadEnd(runningGameState.gameBoard, position) }
+    .map { case (direction, _) => direction }
+
+  val choicesLevel4 = freeDirections
+  val choicesLevel3 = choicesLevel4.filterNot(directionsToDeadEnds.contains)
   val choicesLevel2 = choicesLevel3.filterNot(directionsAdjacentToOtherPlayers.contains)
   val choiceLevel1 = runningGameState.lastDirection.filter(choicesLevel2.contains)
   val choiceLevel0 = runningGameState.lastDirection.map(rightTurn).filter(choicesLevel2.contains)
@@ -22,6 +27,7 @@ def computeNextDirection(runningGameState: GameState.Running): Direction = {
     .orElse(choiceLevel1)
     .orElse(choicesLevel2.headOption)
     .orElse(choicesLevel3.headOption)
+    .orElse(choicesLevel4.headOption)
     .getOrElse(Direction.Up)
 
   //val nextDirection = freeDirections.headOption.getOrElse(Direction.Down)
@@ -52,3 +58,6 @@ def getAdjacentPositions(position: Position, gameBoard: GameBoard): List[(Direct
     (Direction.Up, position.addOffset(0, -1, gameBoard.width, gameBoard.height)),
     (Direction.Right, position.addOffset(1, 0, gameBoard.width, gameBoard.height))
   )
+
+def isDeadEnd(gameBoard: GameBoard, position: Position): Boolean =
+  getFreeDirections(gameBoard, position).isEmpty
