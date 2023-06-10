@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+
+  gpn21-snektron-client:
+    build: .
+    environment:
+      - SERVER_ADDRESS=${SERVER_ADDRESS}
+      - SERVER_PORT=${SERVER_PORT}
+      - USERNAME=${USERNAME}
+      - PASSWORD=${PASSWORD}
