@@ -1,6 +1,13 @@
 enum GameState:
   case Idle
-  case Starting(width: Int, height: Int, playerId: String)
+
+  case Starting(
+    width: Int,
+    height: Int,
+    playerId: String,
+    playerPositions: Map[String, Position] = Map.empty
+  )
+
   case Running(
     playerId: String,
     position: Position,

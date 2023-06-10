@@ -63,40 +63,51 @@ def handleServerMessage(gameState: GameState, message: ServerMessage, outputStre
       GameState.Starting(width, height, playerId)
 
     case ServerMessage.Pos(playerId, x, y) =>
-      val gameState1 = gameState match
-        case GameState.Starting(width, height, myPlayerId) if playerId == myPlayerId =>
-          println("*******************************")
-          val gameBoard = GameBoard(width, height)
-          val position = Position(x, y)
-          GameState.Running(playerId, position, gameBoard)
-        case gameState @ GameState.Running(myPlayerId, _, _, _, _) if playerId == myPlayerId =>
-          gameState.copy(position = Position(x, y))
+      gameState match
+        case startingGameSate: GameState.Starting =>
+          val newPlayerPositions = startingGameSate.playerPositions + (playerId -> Position(x, y))
+          startingGameSate.copy(playerPositions = newPlayerPositions)
+
+        case runningGameState: GameState.Running =>
+          val newGameBoard = runningGameState.gameBoard.updatePlayerPosition(playerId, x, y)
+          val newPlayerPositions = runningGameState.playerPositions + (playerId -> Position(x, y))
+          val newPosition = if (playerId == runningGameState.playerId) Position(x, y) else runningGameState.position
+          runningGameState.copy(position = newPosition, gameBoard = newGameBoard, playerPositions = newPlayerPositions)
+
         case _ =>
           gameState
 
-      gameState1.mapRunning { running =>
-        val newGameBoard = running.gameBoard.updatePlayerPosition(playerId, x, y)
-        val newPlayerPositions = running.playerPositions + (playerId -> Position(x, y))
-        running.copy(gameBoard = newGameBoard, playerPositions = newPlayerPositions)
-      }
-
     case ServerMessage.Tick =>
-      gameState.mapRunning { running =>
-        println("-------------------")
-        println(running.print)
+      gameState match
+        case GameState.Starting(width, height, playerId, playerPositions) =>
+          println("*******************************")
+          val gameBoard = GameBoard(width, height)
 
-        val nextDirection = computeNextDirection(running)
+          val gameBoardWithPlayers = playerPositions.foldLeft(gameBoard) { case (gameBoard, (playerId, position)) =>
+            gameBoard.updatePlayerPosition(playerId, position.x, position.y)
+          }
 
-        println(s"playerId: ${running.playerId}")
-        println(s"position: ${running.position}")
-        //println(s"freeDirections: $freeDirections")
-        println(s"nextDirection: $nextDirection")
-        println("-------------------")
+          val position = playerPositions(playerId)
 
-        sendMessage(ClientMessage.Move(nextDirection), outputStream)
+          GameState.Running(playerId, position, gameBoardWithPlayers, playerPositions)
 
-        running.copy(lastDirection = Some(nextDirection))
-      }
+        case runningGameState: GameState.Running =>
+          println("-------------------")
+          println(runningGameState.print)
+
+          val nextDirection = computeNextDirection(runningGameState)
+
+          println(s"playerId: ${runningGameState.playerId}")
+          println(s"position: ${runningGameState.position}")
+          println(s"nextDirection: $nextDirection")
+          println("-------------------")
+
+          sendMessage(ClientMessage.Move(nextDirection), outputStream)
+
+          runningGameState.copy(lastDirection = Some(nextDirection))
+
+        case _ =>
+          gameState
 
     case ServerMessage.Die(playerIds) =>
       gameState.mapRunning { running =>
@@ -125,4 +136,3 @@ def sendMessage(message: ClientMessage, outputStream: DataOutputStream): Unit = 
 
   println(s"Sent: $messageString, timeDifference: $timeDifference")
 }
-
