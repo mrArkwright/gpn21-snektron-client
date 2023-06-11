@@ -127,6 +127,9 @@ def handleServerMessage(gameState: GameState, message: ServerMessage, outputStre
       println("☠\uFE0F You lost!")
       GameState.Idle
 
+    case ServerMessage.Unknown(message) =>
+      gameState
+
 def sendMessage(message: ClientMessage, outputStream: DataOutputStream): Unit = {
   val messageString = message.toProtocolMessage
   outputStream.writeBytes(messageString + "\n")

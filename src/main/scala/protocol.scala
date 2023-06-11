@@ -8,6 +8,7 @@ enum ServerMessage:
   case Message(playerId: String, message: String)
   case Win(amountWins: Int, amountLoses: Int)
   case Loose(amountWins: Int, amountLoses: Int)
+  case Unknown(fields: List[String])
 
 enum ClientMessage:
   case Join(username: String, password: String)
@@ -37,5 +38,6 @@ def parseServerMessage(unparsedMessage: String): ServerMessage = {
     case List("message", playerId, message) => ServerMessage.Message(playerId, message)
     case List("win", amountWins, amountLoses) => ServerMessage.Win(amountWins.toInt, amountLoses.toInt)
     case List("lose", amountWins, amountLoses) => ServerMessage.Loose(amountWins.toInt, amountLoses.toInt)
+    case _ => ServerMessage.Unknown(messageFields)
   }
 }
