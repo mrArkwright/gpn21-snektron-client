@@ -89,7 +89,8 @@ def handleServerMessage(gameState: GameState, message: ServerMessage, outputStre
 
           val position = playerPositions(playerId)
 
-          GameState.Running(playerId, position, gameBoardWithPlayers, playerPositions)
+          val runningGameState = GameState.Running(playerId, position, gameBoardWithPlayers, playerPositions)
+          handleServerMessage(runningGameState, message, outputStream)
 
         case runningGameState: GameState.Running =>
           println("-------------------")
